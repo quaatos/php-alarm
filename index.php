@@ -1,28 +1,44 @@
 <?php
-system("clear || cls");
+$cls = system('clear || cls');
+define("CLS", $cls);
+
 $jsonfile = file_get_contents('alarms.json');
 $decoded = json_decode($jsonfile);
 
 if (isset($argv[1]) && isset($argv[2]) && isset($argv[3])) {
-    $hour = $argv[1];
-    $minutes = $argv[2];
-    $seconds = $argv[3];
+    if (is_numeric($argv[1]) && is_numeric($argv[2] && is_numeric($argv[3]))) {
+        $hour = $argv[1];
+        $minutes = $argv[2];
+        $seconds = $argv[3];
+    } else {
+        $argumentException = false;
+        do {
+            CLS;
+            $argumentRestart = readline("invalid arguments given, Want to restart? [Y/n]: ");
+            if (strtoupper($argumentRestart == "Y" || $argumentRestart == "")) {
+                system('php index.php -t');
+            } else {
+                echo "Terminating...\n";
+                sleep(2);
+                die("Alarm stoped...\n");
+            }
+        } while ($argumentException = true);
+    }
 } else {
-    if (isset($argv)) {
-        $arguments = ['-t', '-s'];
+        $arguments = ['-t', '-s', '-h'];
         for($j = 0; $j < count($argv); $j++) {
             if (in_array($argv[$j], $arguments)) {
                 if ($argv[$j] == "-t") {
                     echo("Timers: " . PHP_EOL);
                     for($i = 0; $i < count($decoded); $i++) {
-                        echo("\e[32m" . $i . " ==> " . $decoded[$i]->Label . " | " . $decoded[$i]->time . PHP_EOL . "\e[39m");
+                        echo("\e[32m" . $i . " ==> Time: " . $decoded[$i]->time . " | Label: " . $decoded[$i]->Label . PHP_EOL . "\e[39m");
                     }
                 }
 
                 if ($argv[$j] == '-s') {
                     $again = false;
                     while($again = true) {
-                        system('clear || cls');
+                        CLS;
                         echo "Setting new timer e.g: 08:30:12" . PHP_EOL;
                         $settime = readline("New time: " . PHP_EOL);
                         $setlabel = readline("New label: " . PHP_EOL);
@@ -38,18 +54,22 @@ if (isset($argv[1]) && isset($argv[2]) && isset($argv[3])) {
                         }
                     }
                 }
+
+                if ($argv[$j] == "-h") {
+                    echo "Usage: php index.php hour minute sec *optional\n-h ==> Help menu\n-t ==> Show alarms\n-s ==> Set new alarm\n";
+                    exit(0);
+                }
             }
         }
-    }
+    
     
     $option = readline("Set timer: ");
     if ($option <= count($decoded) && $option >= 0) {
         if (is_numeric($option)) {
-            system('clear || cls');
+            CLS;
             echo("Alarm set to >>> " . $decoded[$option]->time);
 
             $split = explode(':', $decoded[$option]->time);
-
             $hour = $split[0];
             $minutes = $split[1];
             $seconds = $split[2];
@@ -69,14 +89,14 @@ while(true) {
 
     if ($alarm == $date) {
         system('espeak "' . $espeak . '" && clear || cls');
-        system("mpg123 sounds/" . arrayEntry());
+        system("mpg123 sounds/" . randArrayEntry());
         exit(0);
         
     }
     sleep(1);
 }
 
-function arrayEntry() {
+function randArrayEntry() {
     $files = scandir('sounds/');
     array_shift($files);
     array_shift($files);
@@ -90,7 +110,7 @@ function addTimer($time, $label) {
         echo "Timer added! Restarting...\n";
         fclose($open);
         sleep(1);
-        system("php index.php -t");
+        system('php index.php -t');
     }
 }
 ?>
