@@ -25,7 +25,7 @@ if (isset($argv[1]) && isset($argv[2]) && isset($argv[3])) {
         } while ($argumentException = true);
     }
 } else {
-        $arguments = ['-t', '-s', '-h'];
+        $arguments = ['-t', '-s', '-h', basename(__FILE__)];
         for($j = 0; $j < count($argv); $j++) {
             if (in_array($argv[$j], $arguments)) {
                 if ($argv[$j] == "-t") {
@@ -42,12 +42,12 @@ if (isset($argv[1]) && isset($argv[2]) && isset($argv[3])) {
                         echo "Setting new timer e.g: 08:30:12" . PHP_EOL;
                         $settime = readline("New time: " . PHP_EOL);
                         $setlabel = readline("New label: " . PHP_EOL);
-                        $sure = readline("Are you sure [Y/n/]: " . PHP_EOL);
+                        $sure = readline("Are you sure [Y/n]: " . PHP_EOL);
 
                         if (strtoupper($sure) == "Y" || $sure == "") {
                             addTimer($settime, $setlabel);
-
-                        } elseif(strtoupper($sure) == "N") { //TODO: Fix json file writing.
+                            exit(0);
+                        } elseif(strtoupper($sure) == "N") {
                             echo "resetting...";
                             sleep(2);
                             $again = true;
@@ -59,6 +59,8 @@ if (isset($argv[1]) && isset($argv[2]) && isset($argv[3])) {
                     echo "Usage: php index.php hour minute sec *optional\n-h ==> Help menu\n-t ==> Show alarms\n-s ==> Set new alarm\n";
                     exit(0);
                 }
+            } else {
+                die("Invalid argument used!");
             }
         }
     
@@ -91,7 +93,6 @@ while(true) {
         system('espeak "' . $espeak . '" && clear || cls');
         system("mpg123 sounds/" . randArrayEntry());
         exit(0);
-        
     }
     sleep(1);
 }
@@ -106,11 +107,16 @@ function randArrayEntry() {
 
 function addTimer($time, $label) {
     $open = fopen("alarms.json", "r+");
-    if (fwrite($open, "{\"Label\":\"$label\", \"time\":\"$time\"") . PHP_EOL) {
+    $lastline = fseek($open, count(file('alarms.json')));
+    $string = "{\"Label\":\"$label\", \"time\":\"$time\"\n";
+    if (fwrite($open, $string, 1)) {
+        fwrite($open, $string);
         echo "Timer added! Restarting...\n";
         fclose($open);
         sleep(1);
         system('php index.php -t');
+    } else {
+        echo "File writing failed!";
     }
 }
 ?>
